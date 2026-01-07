@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 // import 'package:google_fonts/google_fonts.dart';
 class CurrencyConverterPage extends StatefulWidget {
@@ -11,17 +12,46 @@ class CurrencyConverterPage extends StatefulWidget {
 }
 
 class _CurrencyConverterPageState extends State<CurrencyConverterPage> {
-  double result = 0;
+  double result = 0.0;
+  bool isLoading = false;
   final TextEditingController textEditingController = TextEditingController();
 
-void convertCurrency() {
+  // Api function
+  Future<double> fetchUSDRate() async {
+    final url = Uri.parse('https://api.frankfurter.app/latest?from=INR&to=USD');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return (data['rates']['USD'] as num).toDouble();
+    } else {
+      throw Exception('Failed to load exchange rate');
+    }
+  }
+
+  Future<void> convertCurrency() async {
+    FocusScope.of(context).unfocus();
     final input = textEditingController.text;
 
     if (input.isEmpty) return;
+    final amount = double.tryParse(input);
+    if (amount == null) return;
 
     setState(() {
-      result = double.parse(input) * 80.0;
+      isLoading = true;
     });
+    try {
+      final rate = await fetchUSDRate();
+      setState(() {
+        result = amount * rate;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -32,6 +62,7 @@ void convertCurrency() {
 
   @override
   Widget build(BuildContext context) {
+    final displayResult = result == 0 ? '0.00' : result.toStringAsFixed(2);
     return Scaffold(
       appBar: AppBar(
         title: Text('Currency Converter'),
@@ -43,7 +74,7 @@ void convertCurrency() {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'USD ${(result != 0) ? result.toStringAsFixed(2) : result.toString()}',
+              isLoading ? 'Converting...' : 'USD $displayResult',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 40,
@@ -91,7 +122,7 @@ void convertCurrency() {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amberAccent,
                 foregroundColor: Colors.red,
-                fixedSize: Size(100, 40),
+                fixedSize: Size(150, 50),
                 shape: BeveledRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(5.0)),
                 ),
