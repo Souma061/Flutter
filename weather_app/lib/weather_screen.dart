@@ -1,9 +1,114 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:weather_app/hourly_forecast_class.dart';
+import 'package:weather_app/info_card.dart';
+import 'package:weather_app/model/hourly_weather_model.dart';
+import 'package:weather_app/model/weather_model.dart';
 
-class WeatherScreen extends StatelessWidget {
+class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
+
+  @override
+  State<WeatherScreen> createState() => _WeatherScreenState();
+}
+
+class _WeatherScreenState extends State<WeatherScreen> {
+  WeatherModel? weatherData;
+  List<HourlyWeather> hourlyData = [];
+  IconData? weatherIcon;
+
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWeatherData();
+  }
+
+  // Apicall
+  Future<void> fetchWeatherData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    final apiKey = dotenv.env['OPEN_WEATHER_API_KEY'];
+
+    if (apiKey == null || apiKey.isEmpty) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'API key not found';
+      });
+      debugPrint('API key missing');
+      return;
+    }
+
+    const city = 'Howrah';
+
+    final url = Uri.parse(
+      'https://api.openweathermap.org/data/2.5/forecast?q=$city&appid=$apiKey&units=metric',
+    );
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          weatherData = WeatherModel.fromForecastJson(data['list'][0]);
+
+          weatherIcon = weatherData!.condition == 'Clear'
+              ? Icons.wb_sunny
+              : weatherData!.condition == 'Clouds'
+              ? Icons.cloud
+              : Icons.nights_stay;
+
+          // Parse hourly forecast data
+          hourlyData = [];
+          for (int i = 0; i < (data['list'] as List).length && i < 6; i++) {
+            final forecast = data['list'][i];
+            final dateTime = DateTime.parse(forecast['dt_txt']);
+            final formattedTime =
+                '${dateTime.hour.toString().padLeft(2, '0')}:00';
+            final temp = forecast['main']['temp'].toDouble();
+            final condition = forecast['weather'][0]['main'];
+
+            final icon = condition == 'Clear'
+                ? Icons.wb_sunny
+                : condition == 'Clouds'
+                ? Icons.cloud
+                : condition == 'Rain'
+                ? Icons.grain
+                : Icons.nights_stay;
+
+            hourlyData.add(
+              HourlyWeather(time: formattedTime, temperature: temp, icon: icon),
+            );
+          }
+
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Error: ${response.statusCode} - ${response.body}';
+        });
+        debugPrint('API Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error: $e';
+      });
+      debugPrint('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,177 +118,146 @@ class WeatherScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () {
-              debugPrint('refresh');
-            },
+            onPressed: fetchWeatherData,
             icon: Icon(Icons.refresh),
           ), //instead of actionbutton we can also use GestureDetector or InkWell widget
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: Card(
-              elevation: 30,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(26),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, color: Colors.red),
+                ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(26),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Text('300k', style: TextStyle(fontSize: 32)),
-                          SizedBox(height: 16),
-                          Icon(Icons.cloud, size: 64),
-                          SizedBox(height: 16),
-                          Text('Cloudy', style: TextStyle(fontSize: 24)),
-                        ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Card(
+                    elevation: 30,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(26),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${weatherData!.temperature.toStringAsFixed(1)}°C',
+                                  style: const TextStyle(fontSize: 32),
+                                ),
+                                const SizedBox(height: 16),
+                                Icon(weatherIcon ?? Icons.cloud, size: 64),
+                                const SizedBox(height: 16),
+                                Text(
+                                  weatherData!.condition,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                ), // Main Weather Display
+                const SizedBox(height: 20),
+                const Text(
+                  'Weather Forecast',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ),
-          ), // Main Weather Display
-          const SizedBox(height: 20),
-          const Text(
-            'Weather Forecast',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                HourlyForecastClass(),
-                HourlyForecastClass(),
-                HourlyForecastClass(),
-                HourlyForecastClass(),
-                HourlyForecastClass(),
-              ],
-            ),
-          ),
-
-          // Hourly Forecast(Widget Cards)
-          const SizedBox(height: 20),
-          const Text(
-            'Additional Information',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Add your additional information widgets here
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 150,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: [
-                        Expanded(
-                          child: _InfoCard(
-                            title: 'Humidity',
-                            icon: Icons.water_drop,
-                            value: '60%',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _InfoCard(
-                            title: 'Wind Speed',
-                            icon: Icons.air,
-                            value: '15 km/h',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _InfoCard(
-                            title: 'Pressure',
-                            icon: Icons.speed,
-                            value: '1013 hPa',
-                          ),
-                        ),
-                      ],
+                      children: hourlyData.isEmpty
+                          ? [
+                              const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text('No hourly data available'),
+                              ),
+                            ]
+                          : hourlyData
+                                .map(
+                                  (hourly) => HourlyForecastClass(
+                                    time: hourly.time,
+                                    icon: hourly.icon,
+                                    temperature:
+                                        '${hourly.temperature.toStringAsFixed(1)}°C',
+                                  ),
+                                )
+                                .toList(),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          // const Placeholder(fallbackHeight: 150), // Addditional Info
-        ],
-      ),
-    );
-  }
-}
 
-class HourlyForecastClass extends StatelessWidget {
-  const HourlyForecastClass({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 6,
-      child: Container(
-        width: 100,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(26)),
-        child: const Column(
-          children: [
-            Text(
-              '9:00',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                // Hourly Forecast(Widget Cards)
+                const SizedBox(height: 20),
+                const Text(
+                  'Additional Information',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    // Add your additional information widgets here
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: InfoCard(
+                                  title: 'Humidity',
+                                  icon: Icons.water_drop,
+                                  value: '${weatherData?.humidity ?? 0}%',
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: InfoCard(
+                                  title: 'Wind Speed',
+                                  icon: Icons.air,
+                                  value:
+                                      '${(weatherData?.windSpeed ?? 0).toStringAsFixed(1)} km/h',
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: InfoCard(
+                                  title: 'Pressure',
+                                  icon: Icons.speed,
+                                  value: '${weatherData?.pressure ?? 0} hPa',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // const Placeholder(fallbackHeight: 150), // Addditional Info
+              ],
             ),
-            SizedBox(height: 10),
-            Icon(Icons.wb_sunny, size: 32),
-            SizedBox(height: 10),
-            Text('320k'),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final String value;
-
-  const _InfoCard({
-    required this.title,
-    required this.icon,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Icon(icon, size: 28),
-            const SizedBox(height: 8),
-            Text(value),
-          ],
-        ),
-      ),
     );
   }
 }
