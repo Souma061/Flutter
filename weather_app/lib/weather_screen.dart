@@ -38,7 +38,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
     });
 
     final apiKey = dotenv.env['OPEN_WEATHER_API_KEY'];
-
     if (apiKey == null || apiKey.isEmpty) {
       setState(() {
         isLoading = false;

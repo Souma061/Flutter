@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:weather_app/weather_screen.dart';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart' ;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
