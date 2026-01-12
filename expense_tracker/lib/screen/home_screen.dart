@@ -21,9 +21,8 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(child: Text('Welcome to Expense Tracker!'),
-        
-
+      body: Center(
+        child: Text('Expenses will be listed here'),
       ),
     );
   }
