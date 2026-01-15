@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shopping_app/cart_provider.dart';
+// import 'package:provider/provider.dart';
 
 class ProductDetails extends StatefulWidget {
   final Map<String, Object> product;
@@ -9,7 +12,28 @@ class ProductDetails extends StatefulWidget {
 }
 
 class _ProductDetailsState extends State<ProductDetails> {
-  int selectedSizeIndex = 0;
+  int selectedSizeIndex = -1;
+
+  void onTap() {
+    if (selectedSizeIndex != -1) {
+      Provider.of<CartProvider>(context, listen: false).addToCart({
+        'title': widget.product['title'] as String,
+        'imageUrl': widget.product['imageUrl'] as String,
+        'price': widget.product['price'] as double,
+        'sizes': [(widget.product['sizes'] as List<int>)[selectedSizeIndex]],
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Product added to cart!')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a size before adding to cart.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +73,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                     itemBuilder: (context, index) {
                       final size =
                           (widget.product['sizes'] as List<int>)[index];
-                      final isSelected = selectedSizeIndex == index;
+                      final isSelected =
+                          selectedSizeIndex == index && selectedSizeIndex != -1;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6.0),
                         child: GestureDetector(
@@ -117,7 +142,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: onTap,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color.fromRGBO(254, 206, 1, 1),
                     foregroundColor: Colors.black,
