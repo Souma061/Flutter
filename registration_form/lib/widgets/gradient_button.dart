@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:registration_form/palette.dart';
 
 class SubmitButton extends StatelessWidget {
-  const SubmitButton({super.key});
+  final VoidCallback? onPressed;
+  final String text;
+  const SubmitButton({super.key, required this.onPressed, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +18,7 @@ class SubmitButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(40),
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           fixedSize: const Size(280, 60),
           backgroundColor: Colors.transparent,
@@ -25,8 +27,8 @@ class SubmitButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(40),
           ),
         ),
-        child: const Text(
-          'Submit',
+        child:  Text(
+          text,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,

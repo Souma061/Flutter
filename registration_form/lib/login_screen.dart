@@ -4,8 +4,20 @@ import 'package:registration_form/widgets/gradient_button.dart';
 import 'package:registration_form/widgets/login_field.dart';
 import 'package:registration_form/widgets/social_button.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  void loginUser() {
+    // Add your login logic here
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +28,7 @@ class LoginPage extends StatelessWidget {
             children: [
               Image.asset('assets/images/signin_balls.png'),
               const Text(
-                'Login',
+                'Signup',
                 style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -39,11 +51,15 @@ class LoginPage extends StatelessWidget {
                 style: TextStyle(color: Pallete.whiteColor, fontSize: 16),
               ),
               const SizedBox(height: 30),
-              const LoginField(hintText: 'Email'),
+              LoginField(hintText: 'Email', controller: emailController),
               const SizedBox(height: 20),
-              const LoginField(hintText: 'Password'),
+              LoginField(
+                hintText: 'Password',
+                controller: passwordController,
+                isObscure: true,
+              ),
               const SizedBox(height: 30),
-              const SubmitButton(),
+              SubmitButton(onPressed: loginUser, text: 'Signup'),
             ],
           ),
         ),

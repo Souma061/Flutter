@@ -3,13 +3,18 @@ import 'package:registration_form/palette.dart';
 
 class LoginField extends StatelessWidget {
   final String hintText;
-  const LoginField({super.key, required this.hintText});
+  final TextEditingController controller;
+  final bool isObscure;
+  const LoginField({super.key, required this.hintText, required this.controller, this.isObscure = false});
 
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 280),
       child: TextFormField(
+        controller: controller,
+        obscureText: isObscure,
+
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.all(20),
           enabledBorder: OutlineInputBorder(
@@ -23,6 +28,7 @@ class LoginField extends StatelessWidget {
           hintText: hintText,
           hintStyle: const TextStyle(color: Pallete.whiteColor, fontSize: 16),
         ),
+        
       ),
     );
   }
