@@ -1,36 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import './wrapper.dart' as wrapper;
-
-class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+class ForgotPassword extends StatefulWidget {
+  const ForgotPassword({super.key});
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  State<ForgotPassword> createState() => _ForgotPasswordState();
 }
 
-class _SignupPageState extends State<SignupPage> {
+class _ForgotPasswordState extends State<ForgotPassword> {
   TextEditingController email = TextEditingController();
-  TextEditingController password = TextEditingController();
 
-  dynamic signup() async {
+  dynamic resetPassword() async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email.text,
-        password: password.text,
-      );
-      Get.offAll(() => const wrapper.Wrapper());
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email.text);
     } catch (e) {
-      throw Exception('Signup failed: $e');
+      throw Exception('Password reset failed: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up'), elevation: 0),
+      appBar: AppBar(title: const Text('Reset Password'), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -50,34 +42,34 @@ class _SignupPageState extends State<SignupPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: password,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: signup,
+                onPressed: resetPassword,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Sign Up'),
+                child: const Text('Send Reset Email'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Back to Login'),
               ),
             ),
           ],
