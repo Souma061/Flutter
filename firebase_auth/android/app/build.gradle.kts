@@ -48,9 +48,12 @@ dependencies {
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
 
-    // Add Firebase Authentication (since your app name suggests you need Auth)
+    // Add Firebase Authentication
     implementation("com.google.firebase:firebase-auth")
 
-    // Add Analytics (Optional, but good for testing connection)
+    // Add Google Play Services for Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+    // Add Analytics (Optional)
     implementation("com.google.firebase:firebase-analytics")
 }
