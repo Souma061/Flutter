@@ -102,6 +102,22 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> signInWithGitHub() async {
+    try {
+      final githubProvider = GithubAuthProvider();
+
+      await FirebaseAuth.instance.signInWithProvider(githubProvider);
+
+      Get.offAll(() => const Wrapper());
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar(
+        'GitHub Login Failed',
+        e.message ?? 'Authentication error',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   // ================= UI =================
   @override
   Widget build(BuildContext context) {
@@ -201,7 +217,35 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-
+              const SizedBox(height: 16),
+              // GITHUB SIGN-IN BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : signInWithGitHub,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.grey),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: SvgPicture.asset(
+                          'assets/github.svg',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Sign in with GitHub'),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
 
               // SIGN UP
