@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import './forgotpassword_page.dart' as forgotpassword;
 import './signup_page.dart' as signup;
-
+import 'package:get/get.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,11 +15,17 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
   dynamic login() async {
-    // Implement login functionality
-    FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: email.text,
-      password: password.text,
-    );
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email.text,
+        password: password.text,
+      );
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar('Login Error', e.message ?? 'An error occurred');
+    }
+    catch (e) {
+      throw Exception('Login failed: $e');
+    }
   }
 
   @override
