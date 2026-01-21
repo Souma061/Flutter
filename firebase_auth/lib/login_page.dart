@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import './phone_otp.dart';
 import 'signup_page.dart';
 import 'wrapper.dart';
 
@@ -246,6 +247,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              ElevatedButton.icon(
+                onPressed: () => Get.to(() => const Phoneverification()),
+                icon: const Icon(Icons.phone),
+                label: const Text('Sign in with Phone'),
+              ),
+
               const SizedBox(height: 16),
 
               // SIGN UP
