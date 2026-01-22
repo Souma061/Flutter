@@ -21,12 +21,17 @@ class _WrapperState extends State<Wrapper> {
         builder: (context, snapshot) {
           // Handle connection states
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.deepPurpleAccent),
+            );
           }
 
           // Handle errors from the stream
           if (snapshot.hasError) {
-            return _errorScreen('Authentication Error', snapshot.error.toString());
+            return _errorScreen(
+              'Authentication Error',
+              snapshot.error.toString(),
+            );
           }
 
           // Handle authenticated users
@@ -53,7 +58,10 @@ class _WrapperState extends State<Wrapper> {
         children: [
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.all(16.0),

@@ -5,35 +5,49 @@ import 'package:pinput/pinput.dart';
 
 import './wrapper.dart';
 
-class Phoneverification extends StatefulWidget {
-  const Phoneverification({super.key});
+class PhoneVerification extends StatefulWidget {
+  const PhoneVerification({super.key});
 
   @override
-  State<Phoneverification> createState() => _PhoneverificationState();
+  State<PhoneVerification> createState() => _PhoneVerificationState();
 }
 
-class _PhoneverificationState extends State<Phoneverification> {
+class _PhoneVerificationState extends State<PhoneVerification> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
 
   String? _verificationId;
+  int? _resendToken;
+
   bool _isLoading = false;
   bool _otpSent = false;
 
-  //Send otp
+  // 📩 SEND OTP
   Future<void> sendOtp() async {
-    setState(() {
-      _isLoading = true;
-    });
+    final phone = phoneController.text.trim();
+
+    if (!phone.startsWith('+') || phone.length < 10) {
+      Get.snackbar(
+        'Invalid Phone Number',
+        'Enter number with country code (e.g. +91XXXXXXXXXX)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
     await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: phoneController.text.trim(),
+      phoneNumber: phone,
       timeout: const Duration(seconds: 60),
+
       verificationCompleted: (PhoneAuthCredential credential) async {
-        // auto verification
         await FirebaseAuth.instance.signInWithCredential(credential);
         Get.offAll(() => const Wrapper());
       },
+
       verificationFailed: (FirebaseAuthException e) {
+        setState(() => _isLoading = false);
         Get.snackbar(
           'Verification Failed',
           e.message ?? 'Something went wrong',
@@ -42,45 +56,49 @@ class _PhoneverificationState extends State<Phoneverification> {
           colorText: Colors.white,
         );
       },
+
       codeSent: (String verificationId, int? resendToken) {
         setState(() {
           _verificationId = verificationId;
+          _resendToken = resendToken;
           _otpSent = true;
           _isLoading = false;
         });
       },
+
       codeAutoRetrievalTimeout: (String verificationId) {
         _verificationId = verificationId;
       },
+
+      forceResendingToken: _resendToken,
     );
   }
-  //Verify otp
 
+  // 🔐 VERIFY OTP
   Future<void> verifyOtp() async {
-    if (_verificationId == null) {
+    if (_verificationId == null || otpController.text.length < 6) {
       Get.snackbar(
-        'Error',
-        'Please request OTP first',
+        'Invalid OTP',
+        'Please enter the 6-digit OTP',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return;
     }
-    setState(() {
-      _isLoading = true;
-    });
+
+    setState(() => _isLoading = true);
+
     try {
       final credential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otpController.text.trim(),
       );
+
       await FirebaseAuth.instance.signInWithCredential(credential);
       Get.offAll(() => const Wrapper());
     } on FirebaseAuthException catch (e) {
       Get.snackbar(
         'Invalid OTP',
-        e.message ?? 'Error',
+        e.message ?? 'Verification failed',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -90,56 +108,130 @@ class _PhoneverificationState extends State<Phoneverification> {
 
   @override
   Widget build(BuildContext context) {
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 60,
+      textStyle: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+    );
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Phone Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: phoneController,
-              enabled: !_otpSent,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                hintText: '+91XXXXXXXXXX',
+      appBar: AppBar(
+        title: const Text('Phone Authentication'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Phone Login',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            if (_otpSent)
-              Pinput(
-                controller: otpController,
-                length: 6,
-                showCursor: true,
-                onChanged: (value) {
-                  // You can add any logic here when OTP changes
-                },
-                onCompleted: (pin) {
-                  // Optional: Auto-verify when all digits are entered
-                  // verifyOtp();
-                },
+              const SizedBox(height: 8),
+              Text(
+                'Enter your phone number to receive a verification code',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withOpacity(0.6),
+                ),
               ),
-
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+              const SizedBox(height: 48),
+              TextField(
+                controller: phoneController,
+                enabled: !_otpSent,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  hintText: '+1 123 456 7890',
+                  prefixIcon: Icon(Icons.phone_android_outlined),
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (_otpSent) ...[
+                const Text(
+                  'Enter 6-digit code',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white54,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Pinput(
+                    controller: otpController,
+                    length: 6,
+                    defaultPinTheme: defaultPinTheme,
+                    focusedPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        border: Border.all(color: Colors.deepPurpleAccent),
+                      ),
+                    ),
+                    onCompleted: (pin) => verifyOtp(),
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+              ElevatedButton(
                 onPressed: _isLoading
                     ? null
                     : _otpSent
                     ? verifyOtp
                     : sendOtp,
                 child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(_otpSent ? 'Verify OTP' : 'Send OTP'),
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        _otpSent
+                            ? 'Verify & Continue'
+                            : 'Get Verification Code',
+                      ),
               ),
-            ),
-          ],
+              if (_otpSent) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: _isLoading ? null : sendOtp,
+                    child: const Text(
+                      'Resend Code',
+                      style: TextStyle(
+                        color: Colors.deepPurpleAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    otpController.dispose();
+    super.dispose();
   }
 }

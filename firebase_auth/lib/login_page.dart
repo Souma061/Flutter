@@ -123,154 +123,164 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login'), elevation: 0),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // EMAIL
-              TextFormField(
-                controller: emailController,
-                enabled: !_isLoading,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome Back',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Sign in to continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required';
-                  }
-                  if (!_isValidEmail(value)) {
-                    return 'Enter a valid email';
-                  }
-                  return null;
-                },
-              ),
+                const SizedBox(height: 48),
 
-              const SizedBox(height: 16),
-
-              // PASSWORD
-              TextFormField(
-                controller: passwordController,
-                enabled: !_isLoading,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                // EMAIL
+                TextFormField(
+                  controller: emailController,
+                  enabled: !_isLoading,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    hintText: 'Email address',
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!_isValidEmail(value)) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Password is required';
-                  }
-                  return null;
-                },
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-              // LOGIN BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
+                // PASSWORD
+                TextFormField(
+                  controller: passwordController,
+                  enabled: !_isLoading,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Password',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password is required';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // LOGIN BUTTON
+                ElevatedButton(
                   onPressed: _isLoading ? null : login,
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Login'),
                 ),
-              ),
 
-              const SizedBox(height: 16),
-              const Text('OR'),
-              const SizedBox(height: 16),
-
-              // GOOGLE SIGN-IN BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : googleSignIn,
-                  icon: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: SvgPicture.asset(
-                      'assets/google.svg',
-                      fit: BoxFit.contain,
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: Colors.white.withOpacity(0.1)),
                     ),
-                  ),
-                  label: const Text('Sign in with Google'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.grey),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // GITHUB SIGN-IN BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : signInWithGitHub,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.grey),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: SvgPicture.asset(
-                          'assets/github.svg',
-                          fit: BoxFit.contain,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.4),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text('Sign in with GitHub'),
-                    ],
-                  ),
+                    ),
+                    Expanded(
+                      child: Divider(color: Colors.white.withOpacity(0.1)),
+                    ),
+                  ],
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => Get.to(() => const Phoneverification()),
-                icon: const Icon(Icons.phone),
-                label: const Text('Sign in with Phone'),
-              ),
+                const SizedBox(height: 24),
 
-              const SizedBox(height: 16),
-
-              // SIGN UP
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Don't have an account? "),
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            Get.to(() => const SignupPage());
-                          },
-                    child: const Text('Sign Up'),
+                // GOOGLE SIGN-IN BUTTON
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : googleSignIn,
+                  icon: SvgPicture.asset(
+                    'assets/google.svg',
+                    height: 24,
+                    width: 24,
                   ),
-                ],
-              ),
-            ],
+                  label: const Text('Continue with Google'),
+                ),
+                const SizedBox(height: 12),
+
+                // GITHUB SIGN-IN BUTTON
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : signInWithGitHub,
+                  icon: SvgPicture.asset(
+                    'assets/github.svg',
+                    height: 24,
+                    width: 24,
+                  ),
+                  label: const Text('Continue with GitHub'),
+                ),
+                const SizedBox(height: 12),
+
+                // PHONE SIGN-IN BUTTON
+                OutlinedButton.icon(
+                  onPressed: () => Get.to(() => const PhoneVerification()),
+                  icon: const Icon(Icons.phone_outlined, size: 24),
+                  label: const Text('Continue with Phone'),
+                ),
+
+                const SizedBox(height: 32),
+
+                // SIGN UP
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account?",
+                      style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                    ),
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Get.to(() => const SignupPage()),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          color: Colors.deepPurpleAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
