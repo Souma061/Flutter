@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
           await googleUser.authentication;
 
       final OAuthCredential credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken, // ✅ ONLY idToken in v7
+        idToken: googleAuth.idToken,
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
